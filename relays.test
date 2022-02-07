@@ -1,0 +1,8 @@
+# Test relays1
+GET http://relays1/relays/status
+GET http://relays1/relays/config
+GET http://relays1/relays/log/events
+# Test relays2
+GET http://relays2/relays/status
+GET http://relays2/relays/config
+GET http://relays2/relays/log/events

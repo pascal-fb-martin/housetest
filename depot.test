@@ -1,0 +1,29 @@
+GET http://localhost:8080/depot/test/test1.txt?revision=all
+PUT http://localhost:8080/depot/test/test1.txt
++ This is revision 1
+GET http://localhost:8080/depot/test/test1.txt
+GET http://localhost:8080/depot/test/test1.txt?revision=all
+PUT http://localhost:8080/depot/test/test1.txt
++ This is revision 2
+GET http://localhost:8080/depot/test/test1.txt
+GET http://localhost:8080/depot/test/test1.txt?revision=all
+GET http://localhost:8080/depot/test/test1.txt?revision=1
+POST http://localhost:8080/depot/test/test1.txt?revision=1&tag=original-file
++
+GET http://localhost:8080/depot/test/test1.txt?revision=all
+POST http://localhost:8080/depot/test/test1.txt?revision=1&tag=moving
++
+GET http://localhost:8080/depot/test/test1.txt?revision=all
+PUT http://localhost:8080/depot/test/test1.txt
++ This is revision 3
+GET http://localhost:8080/depot/test/test1.txt
+GET http://localhost:8080/depot/test/test1.txt?revision=all
+POST http://localhost:8080/depot/test/test1.txt?revision=2&tag=moving
++
+GET http://localhost:8080/depot/test/test1.txt?revision=all
+GET http://localhost:8080/depot/test/test1.txt?revision=moving
+POST http://localhost:8080/depot/test/test1.txt?revision=2&tag=current
++
+GET http://localhost:8080/depot/test/test1.txt?revision=all
+GET http://localhost:8080/depot/test/test1.txt
+
