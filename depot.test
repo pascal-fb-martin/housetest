@@ -1,42 +1,42 @@
-GET http://localhost:8080/depot/test/testA.txt?revision=all
-PUT http://localhost:8080/depot/test/testA.txt
+GET http://localhost:8080/depot/test/group1/testA.txt?revision=all
+PUT http://localhost:8080/depot/test/group1/testA.txt
 + This is revision 1
-GET http://localhost:8080/depot/test/testA.txt
-GET http://localhost:8080/depot/test/testA.txt?revision=all
-PUT http://localhost:8080/depot/test/testA.txt
+GET http://localhost:8080/depot/test/group1/testA.txt
+GET http://localhost:8080/depot/test/group1/testA.txt?revision=all
+PUT http://localhost:8080/depot/test/group1/testA.txt
 + This is revision 2
-GET http://localhost:8080/depot/test/testA.txt
-GET http://localhost:8080/depot/test/testA.txt?revision=all
-GET http://localhost:8080/depot/test/testA.txt?revision=1
-POST http://localhost:8080/depot/test/testA.txt?revision=1&tag=original-file
+GET http://localhost:8080/depot/test/group1/testA.txt
+GET http://localhost:8080/depot/test/group1/testA.txt?revision=all
+GET http://localhost:8080/depot/test/group1/testA.txt?revision=1
+POST http://localhost:8080/depot/test/group1/testA.txt?revision=1&tag=original-file
 +
-GET http://localhost:8080/depot/test/testA.txt?revision=all
-POST http://localhost:8080/depot/test/testA.txt?revision=1&tag=moving
+GET http://localhost:8080/depot/test/group1/testA.txt?revision=all
+POST http://localhost:8080/depot/test/group1/testA.txt?revision=1&tag=moving
 +
-GET http://localhost:8080/depot/test/testA.txt?revision=all
-PUT http://localhost:8080/depot/test/testA.txt
+GET http://localhost:8080/depot/test/group1/testA.txt?revision=all
+PUT http://localhost:8080/depot/test/group1/testA.txt
 + This is revision 3
-GET http://localhost:8080/depot/test/testA.txt
-GET http://localhost:8080/depot/test/testA.txt?revision=all
-POST http://localhost:8080/depot/test/testA.txt?revision=2&tag=moving
+GET http://localhost:8080/depot/test/group1/testA.txt
+GET http://localhost:8080/depot/test/group1/testA.txt?revision=all
+POST http://localhost:8080/depot/test/group1/testA.txt?revision=2&tag=moving
 +
-GET http://localhost:8080/depot/test/testA.txt?revision=all
-GET http://localhost:8080/depot/test/testA.txt?revision=moving
-POST http://localhost:8080/depot/test/testA.txt?revision=2&tag=current
+GET http://localhost:8080/depot/test/group1/testA.txt?revision=all
+GET http://localhost:8080/depot/test/group1/testA.txt?revision=moving
+POST http://localhost:8080/depot/test/group1/testA.txt?revision=2&tag=current
 +
-GET http://localhost:8080/depot/test/testA.txt?revision=all
-GET http://localhost:8080/depot/test/testA.txt
-PUT http://localhost:8080/depot/test/testB.txt
+GET http://localhost:8080/depot/test/group1/testA.txt?revision=all
+GET http://localhost:8080/depot/test/group1/testA.txt
+PUT http://localhost:8080/depot/test/group2/testB.txt
 + This is testB rev 1
-PUT http://localhost:8080/depot/test/testB.txt
+PUT http://localhost:8080/depot/test/group2/testB.txt
 + This is testB rev 2
-PUT http://localhost:8080/depot/test/testB.txt
+PUT http://localhost:8080/depot/test/group2/testB.txt
 + This is testB rev 3
-GET http://localhost:8080/depot/test/testB.txt?revision=all
-DELETE http://localhost:8080/depot/test/testA.txt?revision=1
-GET http://localhost:8080/depot/test/testA.txt?revision=all
-GET http://localhost:8080/depot/test/testB.txt?revision=all
-DELETE http://localhost:8080/depot/test/testA.txt?revision=moving
-GET http://localhost:8080/depot/test/testA.txt?revision=all
-GET http://localhost:8080/depot/test/testB.txt?revision=all
+GET http://localhost:8080/depot/test/group2/testB.txt?revision=all
+DELETE http://localhost:8080/depot/test/group1/testA.txt?revision=1
+GET http://localhost:8080/depot/test/group1/testA.txt?revision=all
+GET http://localhost:8080/depot/test/group2/testB.txt?revision=all
+DELETE http://localhost:8080/depot/test/group1/testA.txt?revision=moving
+GET http://localhost:8080/depot/test/group1/testA.txt?revision=all
+GET http://localhost:8080/depot/test/group2/testB.txt?revision=all
 
