@@ -47,6 +47,9 @@ static const char *housetest_files[HOUSETEST_MAX];
 
 static time_t housetest_pending = 0;
 
+static char housetest_method[128];
+static char housetest_data[1024];
+
 static void housetest_open (void) {
 
     for (;;) {
@@ -70,10 +73,11 @@ static void housetest_response (void *origin, int status,
                                 char *data, int length) {
 
     const char *redirection = echttp_attribute_get("Location");
-    status = echttp_redirected("GET");
+    status = echttp_redirected(housetest_method);
     if (!status) {
-        printf ("-- Redirected to %s\n", redirection);
-        echttp_submit (0, 0, housetest_response, 0);
+        printf ("-- Redirected %s to %s\n", housetest_method, redirection);
+        echttp_submit (housetest_data, strlen(housetest_data),
+                       housetest_response, 0);
         return;
     }
 
@@ -110,15 +114,15 @@ static void housetest_next (void) {
             continue;
         }
 
-        const char *action = command+i;
+        const char *method = command+i;
         while (isalpha(command[i])) i += 1;
         command[i++] = 0; // Split.
         while (isspace(command[i])) i += 1;
         const char *url = command+i;
 
-        printf ("== %s %s\n", action, url);
+        printf ("== %s %s\n", method, url);
         data[0] = 0;
-        if (!strcmp(action, "POST") || !strcmp(action, "PUT")) {
+        if (!strcmp(method, "POST") || !strcmp(method, "PUT")) {
             if (!fgets (data, sizeof(data), housetest_current)) {
                 housetest_open();
                 continue;
@@ -130,13 +134,20 @@ static void housetest_next (void) {
             }
             printf ("-- Data to send: %s", data+1);
         }
-        const char *error = echttp_client (action, url);
+        const char *error = echttp_client (method, url);
         if (error) {
-            printf ("** %s %s: %s\n", action, url, error);
+            printf ("** %s %s: %s\n", method, url, error);
             continue;
         }
-        echttp_submit (data[0]?data+1:0,
-                       data[0]?strlen(data+1):0, housetest_response, 0);
+
+        snprintf (housetest_method, sizeof(housetest_method), "%s", method);
+        if (data[0])
+            snprintf (housetest_data, sizeof(housetest_data), "%s", data+1);
+        else
+            housetest_data[0] = 0;
+
+        echttp_submit (housetest_data, strlen(housetest_data),
+                       housetest_response, 0);
         housetest_pending = time(0);
         break;
     }
