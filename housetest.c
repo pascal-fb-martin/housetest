@@ -193,7 +193,7 @@ int main (int argc, const char **argv) {
     signal(SIGPIPE, SIG_IGN);
 
     echttp_default ("-http-service=dynamic");
-    echttp_open (argc, argv);
+    argc = echttp_open (argc, argv);
 
     echttp_cors_allow_method("GET");
     echttp_protect (0, housetest_protect);
