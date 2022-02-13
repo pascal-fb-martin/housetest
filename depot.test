@@ -39,4 +39,16 @@ GET http://localhost:8080/depot/test/group2/testB.txt?revision=all
 DELETE http://localhost:8080/depot/test/group1/testA.txt?revision=moving
 GET http://localhost:8080/depot/test/group1/testA.txt?revision=all
 GET http://localhost:8080/depot/test/group2/testB.txt?revision=all
+PUT http://localhost:8080/depot/test/group1/testA.txt
++ This is revision 4
+POST http://localhost:8080/depot/test/group1/testA.txt?revision=3&tag=behind
++
+PUT http://localhost:8080/depot/test/group1/testA.txt
++ This is revision 5
+POST http://localhost:8080/depot/test/group1/testA.txt?revision=4&tag=recent
++
+POST http://localhost:8080/depot/test/group1/testA.txt?revision=3&tag=older
++
+POST http://localhost:8080/depot/test/group1/testA.txt?revision=2&tag=current
++
 
