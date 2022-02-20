@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <sys/time.h>
 
 #include "echttp.h"
 #include "echttp_cors.h"
@@ -45,7 +46,7 @@ static int housetest_cursor = 0;
 static FILE *housetest_current = 0;
 static const char *housetest_files[HOUSETEST_MAX];
 
-static time_t housetest_pending = 0;
+static struct timeval housetest_pending = {0, 0};
 
 static char housetest_method[128];
 static char housetest_data[1024];
@@ -71,6 +72,17 @@ static void housetest_next (void);
 
 static void housetest_response (void *origin, int status,
                                 char *data, int length) {
+
+    struct timeval now;
+
+    gettimeofday (&now, 0);
+    if (now.tv_usec < housetest_pending.tv_usec) {
+        now.tv_usec += 1000000;
+        now.tv_sec -= 1;
+    }
+    printf ("-- Response after %d.%06d seconds\n",
+            now.tv_sec - housetest_pending.tv_sec,
+            now.tv_usec - housetest_pending.tv_usec);
 
     const char *redirection = echttp_attribute_get("Location");
     status = echttp_redirected(housetest_method);
@@ -148,7 +160,7 @@ static void housetest_next (void) {
 
         echttp_submit (housetest_data, strlen(housetest_data),
                        housetest_response, 0);
-        housetest_pending = time(0);
+        gettimeofday (&housetest_pending, 0);
         break;
     }
 }
@@ -164,8 +176,8 @@ static void housetest_start (void) {
 
 static void housetest_background (int fd, int mode) {
 
-    if (housetest_pending) {
-        if (time(0) > housetest_pending + 30) {
+    if (housetest_pending.tv_sec) {
+        if (time(0) > housetest_pending.tv_sec + 30) {
             printf ("** Test abort\n");
             exit (1);
         }
