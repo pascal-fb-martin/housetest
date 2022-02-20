@@ -51,4 +51,7 @@ POST http://localhost:8080/depot/test/group1/testA.txt?revision=3&tag=older
 +
 POST http://localhost:8080/depot/test/group1/testA.txt?revision=2&tag=current
 +
+GET http://localhost:8080/depot/test/all
+GET http://localhost:8080/depot/test/group1/all
+GET http://localhost:8080/depot/test/group2/all
 
