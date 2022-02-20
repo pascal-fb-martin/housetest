@@ -45,6 +45,13 @@ POST http://localhost:8080/depot/test/group1/testA.txt?revision=3&tag=behind
 +
 PUT http://localhost:8080/depot/test/group1/testA.txt
 + This is revision 5
+PUT http://localhost:8080/depot/test/group1/testA.txt
++ This is revision 5
+PUT http://localhost:8080/depot/test/group1/testA.txt
++ This is revision 5 modified 6
+PUT http://localhost:8080/depot/test/group1/testA.txt
++ This is revision
+GET http://localhost:8080/depot/test/group1/testA.txt?revision=all
 POST http://localhost:8080/depot/test/group1/testA.txt?revision=4&tag=recent
 +
 POST http://localhost:8080/depot/test/group1/testA.txt?revision=3&tag=older
