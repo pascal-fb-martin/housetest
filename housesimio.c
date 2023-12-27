@@ -148,10 +148,12 @@ static const char *simio_set (const char *method, const char *uri,
     const char *point = echttp_parameter_get("point");
     const char *statep = echttp_parameter_get("state");
     const char *pulsep = echttp_parameter_get("pulse");
+    const char *cause = echttp_parameter_get("cause");
     int state;
     int pulse;
     int i;
     int found = 0;
+    char comment[256];
 
     if (!point) {
         echttp_error (404, "missing point name");
@@ -179,6 +181,11 @@ static const char *simio_set (const char *method, const char *uri,
     }
 
     int is_all = (strcmp (point, "all") == 0);
+    if (cause)
+        snprintf (comment, sizeof(comment), " (%s)", cause);
+    else
+        comment[0] = 0;
+
     for (i = 0; i < SimIoCount; ++i) {
        if (is_all || (strcmp (point, SimIoDb[i].name) == 0)) {
            found = 1;
@@ -186,10 +193,11 @@ static const char *simio_set (const char *method, const char *uri,
            SimIoDb[i].commanded = state;
            if (pulse) {
                SimIoDb[i].deadline = time(0) + pulse;
-               houselog_event ("SIMIO", point, statep, "FOR %d SECONDS", pulse);
+               houselog_event ("SIMIO", point, statep,
+                               "FOR %d SECONDS%s", pulse, comment);
            } else {
                SimIoDb[i].deadline = 0;
-               houselog_event ("SIMIO", point, statep, "LATCHED");
+               houselog_event ("SIMIO", point, statep, "LATCHED%s", comment);
            }
        }
     }
