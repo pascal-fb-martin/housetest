@@ -37,11 +37,15 @@
 #include "echttp_json.h"
 #include "echttp_static.h"
 #include "houseportalclient.h"
+#include "housediscover.h"
 #include "houselog.h"
 #include "houseconfig.h"
+#include "housedepositor.h"
 
 static int  UseHousePortal = 0;
 static char HostName[256];
+
+#define DEBUG if (echttp_isdebug()) printf
 
 struct SimIoMap {
     const char *name;
@@ -56,7 +60,7 @@ static struct SimIoMap *SimIoDb = 0;
 
 static int SimIoCount = 0;
 
-const char *simio_refresh (void) {
+static const char *simio_refresh (void) {
     int i;
     int oldcount = SimIoCount;
     struct SimIoMap *old = SimIoDb;
@@ -214,12 +218,17 @@ static const char *simio_config (const char *method, const char *uri,
                                    const char *data, int length) {
 
     if (strcmp ("GET", method) == 0) {
-        echttp_transfer (houseconfig_open(), houseconfig_size());
         echttp_content_type_json ();
+        return houseconfig_current();
     } else if (strcmp ("POST", method) == 0) {
         const char *error = houseconfig_update (data);
-        if (error) echttp_error (400, error);
-        simio_refresh ();
+        if (error) {
+            echttp_error (400, error);
+        } else {
+            simio_refresh ();
+            houselog_event ("SYSTEM", "CONFIG", "SAVE", "TO DEPOT %s", houseconfig_name());
+            housedepositor_put ("config", houseconfig_name(), data, length);
+        }
     } else {
         echttp_error (400, "invalid state value");
     }
@@ -251,11 +260,22 @@ static void simio_background (int fd, int mode) {
             houselog_event ("SIMIO", SimIoDb[i].name, state, "END OF PULSE");
         }
     }
+    housediscover (now);
     houselog_background (now);
+    housedepositor_periodic (now);
 }
 
 static void simio_protect (const char *method, const char *uri) {
     echttp_cors_protect(method, uri);
+}
+
+static void simio_config_listener (const char *name, time_t timestamp,
+                                   const char *data, int length) {
+
+    houselog_event ("SYSTEM", "CONFIG", "LOAD", "FROM DEPOT %s", name);
+    const char *error = houseconfig_update (data);
+    if (error) echttp_error (400, error);
+    else simio_refresh ();
 }
 
 int main (int argc, const char **argv) {
@@ -279,7 +299,9 @@ int main (int argc, const char **argv) {
         houseportal_initialize (argc, argv);
         UseHousePortal = 1;
     }
+    housediscover_initialize (argc, argv);
     houselog_initialize ("simio", argc, argv);
+    housedepositor_initialize (argc, argv);
 
     getcwd(path, sizeof(path));
     snprintf (cfgoption, sizeof(cfgoption), "--config=%s/simio.json", path);
@@ -290,6 +312,7 @@ int main (int argc, const char **argv) {
             (HOUSE_FAILURE, "CONFIG", "Cannot load configuration: %s\n", error);
     }
     simio_refresh();
+    housedepositor_subscribe ("config", houseconfig_name(), simio_config_listener);
 
     echttp_cors_allow_method("GET");
     echttp_protect (0, simio_protect);
