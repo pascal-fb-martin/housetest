@@ -273,9 +273,7 @@ static void simio_config_listener (const char *name, time_t timestamp,
                                    const char *data, int length) {
 
     houselog_event ("SYSTEM", "CONFIG", "LOAD", "FROM DEPOT %s", name);
-    const char *error = houseconfig_update (data);
-    if (error) echttp_error (400, error);
-    else simio_refresh ();
+    if (!houseconfig_update (data)) simio_refresh ();
 }
 
 int main (int argc, const char **argv) {
