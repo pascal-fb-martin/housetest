@@ -42,7 +42,6 @@
 #include "houseconfig.h"
 #include "housedepositor.h"
 
-static int  UseHousePortal = 0;
 static char HostName[256];
 
 #define DEBUG if (echttp_isdebug()) printf
@@ -237,20 +236,9 @@ static const char *simio_config (const char *method, const char *uri,
 
 static void simio_background (int fd, int mode) {
 
-    static time_t LastRenewal = 0;
     time_t now = time(0);
     int i;
 
-    if (UseHousePortal) {
-        static const char *path[] = {"control:/simio"};
-        if (now >= LastRenewal + 60) {
-            if (LastRenewal > 0)
-                houseportal_renew();
-            else
-                houseportal_register (echttp_port(4), path, 1);
-            LastRenewal = now;
-        }
-    }
     for (i = 0; i < SimIoCount; ++i) {
         if ((SimIoDb[i].deadline > 0) && (SimIoDb[i].deadline < now)) {
             SimIoDb[i].value = 1 - SimIoDb[i].commanded;
@@ -260,6 +248,7 @@ static void simio_background (int fd, int mode) {
             houselog_event ("SIMIO", SimIoDb[i].name, state, "END OF PULSE");
         }
     }
+    houseportal_background (now);
     housediscover (now);
     houselog_background (now);
     housedepositor_periodic (now);
@@ -294,8 +283,9 @@ int main (int argc, const char **argv) {
 
     argc = echttp_open (argc, argv);
     if (echttp_dynamic_port()) {
+        static const char *path[] = {"control:/simio"};
         houseportal_initialize (argc, argv);
-        UseHousePortal = 1;
+        houseportal_declare (echttp_port(4), path, 1);
     }
     housediscover_initialize (argc, argv);
     houselog_initialize ("simio", argc, argv);
