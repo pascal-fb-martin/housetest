@@ -16,9 +16,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA.
+#
+# WARNING
+#
+# This Makefile depends on echttp and houseportal (dev) being installed.
 
-HROOT=/usr/local
-SHARE=$(HROOT)/share/house
+prefix=/usr/local
+SHARE=$(prefix)/share/house
+        
+INSTALL=/usr/bin/install
 
 all: housetest housesimio
 
@@ -31,24 +37,22 @@ rebuild: clean all
 	gcc -c -g -O -o $@ $<
 
 housetest: housetest.o
-	gcc -g -O -o housetest $< -lechttp -lssl -lcrypto -lrt
+	gcc -g -O -o housetest $< -lechttp -lssl -lcrypto -lmagic -lrt
 
 housesimio: housesimio.o
-	gcc -g -O -o housesimio $< -lhouseportal -lechttp -lssl -lcrypto -lrt
+	gcc -g -O -o housesimio $< -lhouseportal -lechttp -lssl -lcrypto -lmagic -lrt
 
-install: uninstall
-	mkdir -p $(HROOT)/bin
-	cp housetest housesimio $(HROOT)/bin
-	chown root:root $(HROOT)/bin/housetest $(HROOT)/bin/housesimio
-	chmod 755 $(HROOT)/bin/housetest $(HROOT)/bin/housesimio
-	mkdir -p $(SHARE)/public/simio
-	chmod 755 $(SHARE) $(SHARE)/public $(SHARE)/public/simio
-	cp public/* $(SHARE)/public/simio
-	chown root:root $(SHARE)/public/simio/*.html
-	chmod 644 $(SHARE)/public/simio/*.html
+install-ui:
+	$(INSTALL) -m 0755 -d $(DESTDIR)$(SHARE)/public/simio
+	$(INSTALL) -m 0644 public/* $(DESTDIR)$(SHARE)/public/simio
+
+install: install-ui
+	$(INSTALL) -m 0755 -d $(DESTDIR)$(prefix)/bin
+	$(INSTALL) -m 0755 -s housetest housesimio $(DESTDIR)$(prefix)/bin
 
 uninstall:
-	rm -f /usr/local/bin/housetest /usr/local/bin/housesimio
+	rm -f $(DESTDIR)$(prefix)/bin/housetest
+	rm -f $(DESTDIR)$(prefix)/usr/local/bin/housesimio
 
 purge: uninstall
 
