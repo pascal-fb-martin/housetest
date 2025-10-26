@@ -34,7 +34,7 @@ clean:
 rebuild: clean all
 
 %.o: %.c
-	gcc -c -g -O -o $@ $<
+	gcc -c -Wall -g -Os -fPIC -o $@ $<
 
 housetest: housetest.o
 	gcc -g -O -o housetest $< -lechttp -lssl -lcrypto -lmagic -lrt
