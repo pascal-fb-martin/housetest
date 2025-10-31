@@ -80,9 +80,9 @@ static void housetest_response (void *origin, int status,
         now.tv_usec += 1000000;
         now.tv_sec -= 1;
     }
-    printf ("-- Response after %d.%06d seconds\n",
-            now.tv_sec - housetest_pending.tv_sec,
-            now.tv_usec - housetest_pending.tv_usec);
+    printf ("-- Response after %lld.%06lld seconds\n",
+            (long long)(now.tv_sec - housetest_pending.tv_sec),
+            (long long)(now.tv_usec - housetest_pending.tv_usec));
 
     const char *redirection = echttp_attribute_get("Location");
     status = echttp_redirected(housetest_method);
@@ -193,7 +193,6 @@ static void housetest_protect (const char *method, const char *uri) {
 int main (int argc, const char **argv) {
 
     int i;
-    const char *error;
 
     // These strange statements are to make sure that fds 0 to 2 are
     // reserved, since this application might output some errors.
