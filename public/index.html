@@ -7,7 +7,6 @@ function simioShowStatus (response) {
 
     var title = response.host+' - SimIo';
     document.getElementsByTagName ('title')[0].innerHTML = title;
-    document.getElementById('portal').href = 'http://'+response.proxy+'/index.html';
 
     var state = response.control.status;
     for (const [key, value] of Object.entries(state)) {
@@ -132,7 +131,6 @@ window.onload = function() {
    <tr><td>
    <table class="housetop">
    <tr>
-   <td><a id="portal" href="/index.html">Portal</a></td>
    <td><span>Points</span></td>
    <td><a href="/simio/events.html">Events</a></td>
    <td><a href="/simio/config.html">Config</a></td>

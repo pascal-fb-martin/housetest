@@ -93,24 +93,8 @@ function simioConfig () {
     command.send(null);
 }
 
-function simioShowStatus (response) {
-    document.getElementById('portal').href = 'http://'+response.proxy+'/index.html';
-}
-
-function simioStatus () {
-    var command = new XMLHttpRequest();
-    command.open("GET", "/simio/status");
-    command.onreadystatechange = function () {
-        if (command.readyState === 4 && command.status === 200) {
-            simioShowStatus (JSON.parse(command.responseText));
-        }
-    }
-    command.send(null);
-}
-
 window.onload = function() {
    simioConfig();
-   simioStatus();
 };
 </script>
 <head>
@@ -121,7 +105,6 @@ window.onload = function() {
    <tr><td>
    <table class="housetop">
    <tr>
-   <td><a id="portal" href="/index.html">Portal</a></td>
    <td><a href="/simio/index.html">Points</a></td>
    <td><a href="/simio/events.html">Events</a></td>
    <td><span>Config</span></td>
