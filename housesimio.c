@@ -59,16 +59,17 @@ static struct SimIoMap *SimIoDb = 0;
 
 static int SimIoCount = 0;
 
-static const char *simio_refresh (void) {
+static void simio_refresh (void) {
+
     int i;
     int oldcount = SimIoCount;
     struct SimIoMap *old = SimIoDb;
 
     int points = houseconfig_array (0, ".simio.points");
-    if (points < 0) return "cannot find points array";
+    if (points < 0) return; // Cannot find points array
 
     SimIoCount = houseconfig_array_length (points);
-    if (SimIoCount < 0) return "no point found";
+    if (SimIoCount < 0) return; // No point found
     if (echttp_isdebug()) fprintf (stderr, "found %d points\n", SimIoCount);
 
     SimIoDb = calloc (sizeof(struct SimIoMap), SimIoCount);
