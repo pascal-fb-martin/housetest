@@ -8,8 +8,8 @@ function simioShowStatus (response) {
     var title = response.host+' - SimIo';
     document.getElementsByTagName ('title')[0].innerHTML = title;
 
-    var state = response.control.status;
-    for (const [key, value] of Object.entries(state)) {
+    var status = response.control.status;
+    for (const [key, value] of Object.entries(status)) {
         var state = document.getElementById ('state-'+key);
         var button = document.getElementById ('button-'+key);
         button.disabled = false;
@@ -21,8 +21,12 @@ function simioShowStatus (response) {
             state.innerHTML = 'OFF';
             button.innerHTML = 'ON';
             button.controlState = 'on';
-        } else {
+        } else if (value.state) {
             state.innerHTML = value.state;
+            button.innerHTML = 'OFF';
+            button.controlState = 'off';
+        } else {
+            state.innerHTML = '';
             button.innerHTML = 'ON';
             button.disabled = true;
         }

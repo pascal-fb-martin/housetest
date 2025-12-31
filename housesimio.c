@@ -49,9 +49,7 @@ static char HostName[256];
 struct SimIoMap {
     const char *name;
     const char *gear;
-    char *status;
-    int value;
-    int commanded;
+    char *state;
     time_t deadline;
 };
 
@@ -66,11 +64,17 @@ static void simio_refresh (void) {
     struct SimIoMap *old = SimIoDb;
 
     int points = houseconfig_array (0, ".simio.points");
-    if (points < 0) return; // Cannot find points array
+    if (points < 0) {
+        DEBUG ("Cannot find points array\n");
+        return;
+    }
 
     SimIoCount = houseconfig_array_length (points);
-    if (SimIoCount < 0) return; // No point found
-    if (echttp_isdebug()) fprintf (stderr, "found %d points\n", SimIoCount);
+    if (SimIoCount < 0) {
+        DEBUG ("No point found\n");
+        return;
+    }
+    DEBUG ("found %d points\n", SimIoCount);
 
     SimIoDb = calloc (sizeof(struct SimIoMap), SimIoCount);
 
@@ -82,9 +86,8 @@ static void simio_refresh (void) {
         if (point > 0) {
             SimIoDb[i].name = houseconfig_string (point, ".name");
             SimIoDb[i].gear = houseconfig_string (point, ".gear");
-            SimIoDb[i].commanded = 0;
             SimIoDb[i].deadline = 0;
-            SimIoDb[i].value = 0;
+            SimIoDb[i].state = 0;
         }
     }
 
@@ -94,12 +97,13 @@ static void simio_refresh (void) {
             int j;
             for (j = 0; j < SimIoCount; ++j) {
                if (strcmp (old[i].name, SimIoDb[j].name) == 0) {
-                   SimIoDb[j].value = old[i].value;
-                   SimIoDb[j].commanded = old[i].commanded;
+                   SimIoDb[j].state = old[i].state;
                    SimIoDb[j].deadline = old[i].deadline;
+                   old[i].state = 0; // Do not free: reused.
                    break;
                }
             }
+            if (old[i].state) free (old[i].state);
         }
         free(old);
     }
@@ -124,14 +128,13 @@ static const char *simio_status (const char *method, const char *uri,
     for (i = 0; i < SimIoCount; ++i) {
         time_t pulsed = SimIoDb[i].deadline;
         const char *name = SimIoDb[i].name;
-        const char *status = SimIoDb[i].status;
-        if (!status) status = SimIoDb[i].value?"on":"off";
-        const char *commanded = SimIoDb[i].commanded?"on":"off";
+        const char *state = SimIoDb[i].state;
+        if (!state) state = "off";
         const char *gear = SimIoDb[i].gear;
 
         int point = echttp_json_add_object (context, container, name);
-        echttp_json_add_string (context, point, "state", status);
-        echttp_json_add_string (context, point, "command", commanded);
+        echttp_json_add_string (context, point, "state", state);
+        echttp_json_add_string (context, point, "command", state);
         if (pulsed)
             echttp_json_add_integer (context, point, "pulse", (int)pulsed);
         if (gear && gear[0] != 0)
@@ -153,7 +156,6 @@ static const char *simio_set (const char *method, const char *uri,
     const char *statep = echttp_parameter_get("state");
     const char *pulsep = echttp_parameter_get("pulse");
     const char *cause = echttp_parameter_get("cause");
-    int state;
     int pulse;
     int i;
     int found = 0;
@@ -164,18 +166,12 @@ static const char *simio_set (const char *method, const char *uri,
         return "";
     }
     if (!statep) {
-        echttp_error (400, "missing state value");
+        echttp_error (400, "missing state");
         return "";
     }
-    if ((strcmp(statep, "on") == 0) || (strcmp(statep, "1") == 0)) {
-        state = 1;
-    } else if ((strcmp(statep, "off") == 0) || (strcmp(statep, "0") == 0)) {
-        state = 0;
-    } else {
-        echttp_error (400, "invalid state value");
-        houselog_event ("SIMIO", point, statep, "INVALID STATE");
-        return "";
-    }
+
+    // Optimization: use no storage for default state "off".
+    const char *state = strcasecmp (statep, "off") ? statep : 0;
 
     pulse = pulsep ? atoi(pulsep) : 0;
     if (pulse < 0) {
@@ -193,8 +189,8 @@ static const char *simio_set (const char *method, const char *uri,
     for (i = 0; i < SimIoCount; ++i) {
        if (is_all || (strcmp (point, SimIoDb[i].name) == 0)) {
            found = 1;
-           SimIoDb[i].value = state;
-           SimIoDb[i].commanded = state;
+           if (SimIoDb[i].state) free (SimIoDb[i].state);
+           SimIoDb[i].state = state ? strdup (state) : 0;
            if (pulse) {
                SimIoDb[i].deadline = time(0) + pulse;
                houselog_event ("SIMIO", point, statep,
@@ -242,11 +238,10 @@ static void simio_background (int fd, int mode) {
 
     for (i = 0; i < SimIoCount; ++i) {
         if ((SimIoDb[i].deadline > 0) && (SimIoDb[i].deadline < now)) {
-            SimIoDb[i].value = 1 - SimIoDb[i].commanded;
-            SimIoDb[i].commanded = SimIoDb[i].value;
+            if (SimIoDb[i].state) free (SimIoDb[i].state);
+            SimIoDb[i].state = 0;
             SimIoDb[i].deadline = 0;
-            const char *state = SimIoDb[i].value?"ON":"OFF";
-            houselog_event ("SIMIO", SimIoDb[i].name, state, "END OF PULSE");
+            houselog_event ("SIMIO", SimIoDb[i].name, "OFF", "END OF PULSE");
         }
     }
     houseportal_background (now);
@@ -297,6 +292,7 @@ int main (int argc, const char **argv) {
     houseconfig_default (cfgoption);
     const char *error = houseconfig_load (argc, argv);
     if (error) {
+        DEBUG ("Cannot load configuration: %s\n", error);
         houselog_trace
             (HOUSE_FAILURE, "CONFIG", "Cannot load configuration: %s\n", error);
     }
