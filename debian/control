@@ -1,0 +1,15 @@
+Source: housesimio
+Version: 1.0
+Section: Web servers
+Maintainer: Pascal Martin <pascal.fb.martin@gmail.com>
+Priority: optional
+Homepage: https://github.com/pascal-fb-martin/housetest
+Standard-Version: 4.7.0
+Package: housesimio
+Architecture: {{arch}}
+Depends: houseportal (>= 2.9)
+Description: A House service to store calculated IO points.
+ HouseSimio is part of the House suite of web services.
+ .
+ HouseSimio allow remote services to control, read and share calculated points.
+
