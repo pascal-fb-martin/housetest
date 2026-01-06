@@ -26,6 +26,11 @@ SHARE=$(prefix)/share/house
         
 INSTALL=/usr/bin/install
 
+HAPP=housesimio
+HCAT=infrastructure
+
+# Application build. --------------------------------------------
+
 all: housetest housesimio
 
 clean:
@@ -42,17 +47,34 @@ housetest: housetest.o
 housesimio: housesimio.o
 	gcc -g -O -o housesimio $< -lhouseportal -lechttp -lssl -lcrypto -lmagic -lrt
 
-install-ui:
+# Application files installation --------------------------------
+
+install-ui: install-preamble
 	$(INSTALL) -m 0755 -d $(DESTDIR)$(SHARE)/public/simio
 	$(INSTALL) -m 0644 public/* $(DESTDIR)$(SHARE)/public/simio
 
-install: install-ui
-	$(INSTALL) -m 0755 -d $(DESTDIR)$(prefix)/bin
+install-runtime: install-preamble
 	$(INSTALL) -m 0755 -s housetest housesimio $(DESTDIR)$(prefix)/bin
 
-uninstall:
-	rm -f $(DESTDIR)$(prefix)/bin/housetest
-	rm -f $(DESTDIR)$(prefix)/usr/local/bin/housesimio
+install-app: install-ui install-runtime
 
-purge: uninstall
+uninstall-app:
+	rm -f $(DESTDIR)$(prefix)/bin/housetest
+	rm -f $(DESTDIR)$(prefix)/bin/housesimio
+	rm -rf $(DESTDIR)$(SHARE)/public/simio
+
+purge-app:
+
+purge-config:
+	rm -rf $(DESTDIR)/default/housesimio
+
+# Build a private Debian package. -------------------------------
+
+install-package: install-ui install-runtime install-systemd
+
+debian-package: debian-package-generic
+
+# System installation. ------------------------------------------
+
+include $(SHARE)/install.mak
 

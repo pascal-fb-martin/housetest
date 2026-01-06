@@ -173,6 +173,9 @@ static const char *simio_set (const char *method, const char *uri,
     // Optimization: use no storage for default state "off".
     const char *state = strcasecmp (statep, "off") ? statep : 0;
 
+    // Special case: "clear" means a transition from "alert" to "on"
+    if (!strcasecmp (statep, "clear")) state = "on";
+
     pulse = pulsep ? atoi(pulsep) : 0;
     if (pulse < 0) {
         echttp_error (400, "invalid pulse value");
@@ -189,6 +192,14 @@ static const char *simio_set (const char *method, const char *uri,
     for (i = 0; i < SimIoCount; ++i) {
        if (is_all || (strcmp (point, SimIoDb[i].name) == 0)) {
            found = 1;
+
+           // Special case: "clear" means a transition from "alert" to "on" if
+           // the point is in the "alert" state, silently ignored otherwise.
+           if (!strcasecmp (statep, "clear")) {
+              if (!SimIoDb[i].state) continue;
+              if (strcasecmp (SimIoDb[i].state, "alert")) continue;
+           }
+
            if (SimIoDb[i].state) free (SimIoDb[i].state);
            SimIoDb[i].state = state ? strdup (state) : 0;
            if (pulse) {
@@ -263,9 +274,6 @@ static void simio_config_listener (const char *name, time_t timestamp,
 
 int main (int argc, const char **argv) {
 
-    char path[256];
-    char cfgoption[512];
-
     // These strange statements are to make sure that fds 0 to 2 are
     // reserved, since this application might output some errors.
     // 3 descriptors are wasted if 0, 1 and 2 are already open. No big deal.
@@ -287,9 +295,7 @@ int main (int argc, const char **argv) {
     houselog_initialize ("simio", argc, argv);
     housedepositor_initialize (argc, argv);
 
-    getcwd(path, sizeof(path));
-    snprintf (cfgoption, sizeof(cfgoption), "--config=%s/simio.json", path);
-    houseconfig_default (cfgoption);
+    houseconfig_default ("--config-name=simio");
     const char *error = houseconfig_load (argc, argv);
     if (error) {
         DEBUG ("Cannot load configuration: %s\n", error);
