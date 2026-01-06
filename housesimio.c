@@ -40,6 +40,7 @@
 #include "housediscover.h"
 #include "houselog.h"
 #include "houseconfig.h"
+#include "housestate.h"
 #include "housedepositor.h"
 
 static char HostName[256];
@@ -55,13 +56,16 @@ struct SimIoMap {
 
 static struct SimIoMap *SimIoDb = 0;
 
+static int LiveState = -1;
+
 static int SimIoCount = 0;
 
 static void simio_refresh (void) {
 
     int i;
+    int newcount;
     int oldcount = SimIoCount;
-    struct SimIoMap *old = SimIoDb;
+    struct SimIoMap *olddb = SimIoDb;
 
     int points = houseconfig_array (0, ".simio.points");
     if (points < 0) {
@@ -69,13 +73,14 @@ static void simio_refresh (void) {
         return;
     }
 
-    SimIoCount = houseconfig_array_length (points);
-    if (SimIoCount < 0) {
+    newcount = houseconfig_array_length (points);
+    if (newcount < 0) {
         DEBUG ("No point found\n");
         return;
     }
-    DEBUG ("found %d points\n", SimIoCount);
+    DEBUG ("found %d points\n", newcount);
 
+    SimIoCount = newcount;
     SimIoDb = calloc (sizeof(struct SimIoMap), SimIoCount);
 
     for (i = 0; i < SimIoCount; ++i) {
@@ -91,26 +96,30 @@ static void simio_refresh (void) {
         }
     }
 
-    if (old) {
+    if (olddb) {
         // Maintain the pre-existing state for those points still present.
         for (i = 0; i < oldcount; ++i) {
             int j;
             for (j = 0; j < SimIoCount; ++j) {
-               if (strcmp (old[i].name, SimIoDb[j].name) == 0) {
-                   SimIoDb[j].state = old[i].state;
-                   SimIoDb[j].deadline = old[i].deadline;
-                   old[i].state = 0; // Do not free: reused.
+               if (strcmp (olddb[i].name, SimIoDb[j].name) == 0) {
+                   SimIoDb[j].state = olddb[i].state;
+                   SimIoDb[j].deadline = olddb[i].deadline;
+                   olddb[i].state = 0; // Do not free: reused.
                    break;
                }
             }
-            if (old[i].state) free (old[i].state);
+            if (olddb[i].state) free (olddb[i].state);
         }
-        free(old);
+        free(olddb);
     }
+    housestate_changed (LiveState);
 }
 
 static const char *simio_status (const char *method, const char *uri,
                                  const char *data, int length) {
+
+    if (housestate_same (LiveState)) return "";
+
     static char buffer[65537];
     ParserToken token[1024];
     char pool[65537];
@@ -121,7 +130,8 @@ static const char *simio_status (const char *method, const char *uri,
     int root = echttp_json_add_object (context, 0, 0);
     echttp_json_add_string (context, root, "host", HostName);
     echttp_json_add_string (context, root, "proxy", houseportal_server());
-    echttp_json_add_integer (context, root, "timestamp", (long)time(0));
+    echttp_json_add_integer (context, root, "timestamp", (long long)time(0));
+    echttp_json_add_integer (context, root, "latest", housestate_current(LiveState));
     int top = echttp_json_add_object (context, root, "control");
     int container = echttp_json_add_object (context, top, "status");
 
@@ -218,6 +228,7 @@ static const char *simio_set (const char *method, const char *uri,
         houselog_event ("SIMIO", point, statep, "INVALID POINT");
         return "";
     }
+    housestate_changed (LiveState);
     return simio_status (method, uri, data, length);
 }
 
@@ -302,6 +313,9 @@ int main (int argc, const char **argv) {
         houselog_trace
             (HOUSE_FAILURE, "CONFIG", "Cannot load configuration: %s\n", error);
     }
+
+    LiveState = housestate_declare ("live");
+
     simio_refresh();
     housedepositor_subscribe ("config", houseconfig_name(), simio_config_listener);
 

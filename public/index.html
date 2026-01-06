@@ -3,7 +3,12 @@
 <head>
 <link rel=stylesheet type="text/css" href="/house.css" title="House">
 <script>
+
+var LatestStatus = 0;
+
 function simioShowStatus (response) {
+
+    if (response.latest) LatestStatus = response.latest;
 
     var title = response.host+' - SimIo';
     document.getElementsByTagName ('title')[0].innerHTML = title;
@@ -34,8 +39,11 @@ function simioShowStatus (response) {
 }
 
 function simioStatus () {
+    var url = "/simio/status";
+    if (LatestStatus) url += "?known=" + LatestStatus;
+
     var command = new XMLHttpRequest();
-    command.open("GET", "/simio/status");
+    command.open("GET", url);
     command.onreadystatechange = function () {
         if (command.readyState === 4 && command.status === 200) {
             simioShowStatus (JSON.parse(command.responseText));
