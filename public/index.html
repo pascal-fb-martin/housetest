@@ -94,7 +94,25 @@ window.onload = function() {
            button.id = 'button-'+point.name;
            button.onclick = controlClick;
            button.controlName = point.name;
-           button.controlOn = point.on;
+           inner.appendChild(button);
+           outer.appendChild(inner);
+
+           inner = document.createElement("td");
+           button = document.createElement("button");
+           button.innerHTML = 'Alert';
+           button.disabled = false;
+           button.id = 'alert-'+point.name;
+           button.onclick = controlClick;
+           button.controlName = point.name;
+           button.controlState = "alert";
+           inner.appendChild(button);
+           button = document.createElement("button");
+           button.innerHTML = 'Clear';
+           button.disabled = false;
+           button.id = 'clear-'+point.name;
+           button.onclick = controlClick;
+           button.controlName = point.name;
+           button.controlState = "clear";
            inner.appendChild(button);
            outer.appendChild(inner);
 
@@ -154,8 +172,9 @@ window.onload = function() {
          <th width="14%">NAME</th>
          <th width="10%">STATE</th>
          <th width="10%">CONTROL</th>
+         <th width="10%">ALERTS</th>
          <th width="14%">GEAR</th>
-         <th width="52%">DESCRIPTION</th>
+         <th width="42%">DESCRIPTION</th>
       </tr>
    </table>
    </section>
