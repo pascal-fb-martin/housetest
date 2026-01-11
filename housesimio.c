@@ -144,7 +144,6 @@ static const char *simio_status (const char *method, const char *uri,
 
         int point = echttp_json_add_object (context, container, name);
         echttp_json_add_string (context, point, "state", state);
-        echttp_json_add_string (context, point, "command", state);
         if (pulsed)
             echttp_json_add_integer (context, point, "pulse", (int)pulsed);
         if (gear && gear[0] != 0)
