@@ -1,15 +1,16 @@
-Source: housesimio
+Source: housetest
 Version: 1.0
 Section: Web servers
 Maintainer: Pascal Martin <pascal.fb.martin@gmail.com>
 Priority: optional
 Homepage: https://github.com/pascal-fb-martin/housetest
 Standard-Version: 4.7.0
-Package: housesimio
+Package: housetest
 Architecture: {{arch}}
 Depends: houseportal (>= 2.9)
 Description: A House service to store calculated IO points.
- HouseSimio is part of the House suite of web services.
+ HouseTest is part of the House suite. It provides test applications
  .
- HouseSimio allow remote services to control, read and share calculated points.
+ The housetest program is a web client used to run test scripts.
+ The housesimio program is a service that simulates IO points. It can also be used in a production environment to store calculated points.
 

@@ -55,5 +55,22 @@ An example of an alert is a camera detecting motion: this transitions the matchi
 
 ## Web API
 
-The housesimio service implements the House control web API. See [HouseRelays](https://github.com/pascal-fb-martin/houserelays) for more details.
+The housesimio service implements the [House control web API](https://github.com/pascal-fb-martin/houseportal/blob/master/controlapi.md).
+
+## Debian Packaging
+
+The provided Makefile supports building private Debian packages. These are _not_ official packages:
+
+- They do not follow all Debian policies.
+
+- They are not built using Debian standard conventions and tools.
+
+- The packaging is not separate from the upstream sources, and there is
+  no source package.
+
+To build a Debian package, use the `debian-package` target:
+
+``` 
+make debian-package
+``` 
 
