@@ -80,14 +80,12 @@ static void simio_refresh (void) {
     }
     DEBUG ("found %d points\n", newcount);
 
-    SimIoCount = newcount;
-    SimIoDb = calloc (sizeof(struct SimIoMap), SimIoCount);
+    SimIoDb = calloc (newcount, sizeof(struct SimIoMap));
+    int *pointlist = calloc (newcount, sizeof(int));
+    SimIoCount = houseconfig_enumerate (points, pointlist, newcount);
 
     for (i = 0; i < SimIoCount; ++i) {
-        int point;
-        char path[128];
-        snprintf (path, sizeof(path), "[%d]", i);
-        point = houseconfig_object (points, path);
+        int point = pointlist[i];
         if (point > 0) {
             SimIoDb[i].name = houseconfig_string (point, ".name");
             SimIoDb[i].gear = houseconfig_string (point, ".gear");
@@ -95,6 +93,7 @@ static void simio_refresh (void) {
             SimIoDb[i].state = 0;
         }
     }
+    free (pointlist);
 
     if (olddb) {
         // Maintain the pre-existing state for those points still present.
