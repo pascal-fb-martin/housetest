@@ -60,7 +60,7 @@ static int LiveState = -1;
 
 static int SimIoCount = 0;
 
-static void simio_refresh (void) {
+static const char *simio_refresh (void) {
 
     int i;
     int newcount;
@@ -68,15 +68,12 @@ static void simio_refresh (void) {
     struct SimIoMap *olddb = SimIoDb;
 
     int points = houseconfig_array (0, ".simio.points");
-    if (points < 0) {
-        DEBUG ("Cannot find points array\n");
-        return;
-    }
+    if (points < 0) return "Cannot find points array";
 
     newcount = houseconfig_array_length (points);
     if (newcount < 0) {
         DEBUG ("No point found\n");
-        return;
+        return 0; // An empty config is not an error.
     }
     DEBUG ("found %d points\n", newcount);
 
@@ -112,6 +109,7 @@ static void simio_refresh (void) {
         free(olddb);
     }
     housestate_changed (LiveState);
+    return 0;
 }
 
 static const char *simio_status (const char *method, const char *uri,
@@ -236,18 +234,17 @@ static const char *simio_config (const char *method, const char *uri,
     if (strcmp ("GET", method) == 0) {
         echttp_content_type_json ();
         return houseconfig_current();
-    } else if (strcmp ("POST", method) == 0) {
-        const char *error = houseconfig_update (data);
+    }
+
+    if (strcmp ("POST", method) == 0) {
+        const char *error = houseconfig_update (data, "USER CHANGE");
         if (error) {
             echttp_error (400, error);
-        } else {
-            simio_refresh ();
-            houselog_event ("SYSTEM", "CONFIG", "SAVE", "TO DEPOT %s", houseconfig_name());
-            housedepositor_put ("config", houseconfig_name(), data, length);
         }
-    } else {
-        echttp_error (400, "invalid state value");
+        return "";
     }
+
+    echttp_error (400, "invalid state value");
     return "";
 }
 
@@ -267,18 +264,12 @@ static void simio_background (int fd, int mode) {
     houseportal_background (now);
     housediscover (now);
     houselog_background (now);
+    houseconfig_background (now);
     housedepositor_periodic (now);
 }
 
 static void simio_protect (const char *method, const char *uri) {
     echttp_cors_protect(method, uri);
-}
-
-static void simio_config_listener (const char *name, time_t timestamp,
-                                   const char *data, int length) {
-
-    houselog_event ("SYSTEM", "CONFIG", "LOAD", "FROM DEPOT %s", name);
-    if (!houseconfig_update (data)) simio_refresh ();
 }
 
 int main (int argc, const char **argv) {
@@ -304,8 +295,8 @@ int main (int argc, const char **argv) {
     houselog_initialize ("simio", argc, argv);
     housedepositor_initialize (argc, argv);
 
-    houseconfig_default ("--config-name=simio");
-    const char *error = houseconfig_load (argc, argv);
+    const char *error =
+        houseconfig_initialize ("simio", simio_refresh, argc, argv);
     if (error) {
         DEBUG ("Cannot load configuration: %s\n", error);
         houselog_trace
@@ -313,9 +304,6 @@ int main (int argc, const char **argv) {
     }
 
     LiveState = housestate_declare ("live");
-
-    simio_refresh();
-    housedepositor_subscribe ("config", houseconfig_name(), simio_config_listener);
 
     echttp_cors_allow_method("GET");
     echttp_protect (0, simio_protect);
