@@ -82,7 +82,7 @@ static const char *simio_refresh (void) {
     SimIoCount = houseconfig_enumerate (points, pointlist, newcount);
 
     for (i = 0; i < SimIoCount; ++i) {
-        int point = pointlist[i];
+        int point = houseconfig_object (pointlist[i], 0);
         if (point > 0) {
             SimIoDb[i].name = houseconfig_string (point, ".name");
             SimIoDb[i].gear = houseconfig_string (point, ".gear");
