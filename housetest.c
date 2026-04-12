@@ -39,6 +39,7 @@
 #include "echttp_cors.h"
 #include "echttp_json.h"
 #include "echttp_static.h"
+#include "echttp_libc.h"
 
 #define HOUSETEST_MAX 256
 static int housetest_count = 0;
@@ -152,9 +153,9 @@ static void housetest_next (void) {
             continue;
         }
 
-        snprintf (housetest_method, sizeof(housetest_method), "%s", method);
+        strtcpy (housetest_method, method, sizeof(housetest_method));
         if (data[0])
-            snprintf (housetest_data, sizeof(housetest_data), "%s", data+1);
+            strtcpy (housetest_data, data+1, sizeof(housetest_data));
         else
             housetest_data[0] = 0;
 
